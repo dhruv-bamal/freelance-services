@@ -78,13 +78,30 @@ export function ContactForm({
     setErrors((prev) => ({ ...prev, [key]: undefined }));
   };
 
+  /*
+   * Only name and message are required, and both are required because they shape
+   * the message itself rather than because a rule says so.
+   *
+   * There used to be an "email or phone, at least one" rule here. It was wrong
+   * twice over. It contradicted the labels — both fields said "(optional)" and
+   * then one of them turned out not to be — and it attached its error to `phone`,
+   * so leaving both blank produced a phone-number-required message under a field
+   * marked optional. A requirement a visitor only discovers by failing it is not
+   * a requirement, it is a trap.
+   *
+   * It was also unnecessary. This form does not post anywhere: it composes a
+   * WhatsApp message and hands off, or falls back to mailto. Either way the reply
+   * path comes with the channel — a WhatsApp message arrives with the sender's
+   * number, an email with their address. Asking for contact details as a
+   * condition of sending was asking for something the transport already carries.
+   *
+   * The email format check stays: if someone does type an address, a typo in it
+   * is worth catching while they can still fix it.
+   */
   function validate(): Errors {
     const next: Errors = {};
     if (!fields.name.trim()) next.name = 'Please tell me your name.';
     if (!fields.message.trim()) next.message = 'A sentence or two about the project is enough.';
-    if (!fields.email.trim() && !fields.phone.trim()) {
-      next.phone = 'Please leave a phone number or an email so I can reply.';
-    }
     if (fields.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.email.trim())) {
       next.email = 'That email address does not look right.';
     }
@@ -182,11 +199,12 @@ export function ContactForm({
           error={errors.email}
         />
         <Field
-          label="Phone or WhatsApp"
+          label="Phone"
           type="tel"
           name="tel"
           inputMode="tel"
           autoComplete="tel"
+          hint="If you would rather I called."
           value={fields.phone}
           onChange={set('phone')}
           error={errors.phone}

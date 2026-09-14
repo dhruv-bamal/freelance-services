@@ -28,8 +28,8 @@ export const site = {
   location: 'Ghaziabad, Uttar Pradesh',
 
   /* ---- Contact ---------------------------------------------------------- */
-  email: 'bamaldhruv1105@gmail.com',
-  emailHref: 'mailto:bamaldhruv1105@gmail.com',
+  email: 'developer.dhruvbamal@gmail.com',
+  emailHref: 'mailto:developer.dhruvbamal@gmail.com',
   phoneDisplay: '+91 98105 05413',
   phoneHref: `tel:${PHONE_E164}`,
   whatsappDigits: WHATSAPP_DIGITS,
