@@ -88,11 +88,53 @@ export const site = {
 } as const;
 
 /**
- * Canonical origin. Set NEXT_PUBLIC_SITE_URL in the deployment environment; the
- * localhost fallback is only useful while developing.
+ * Canonical origin, used for metadataBase, canonicals, the sitemap, robots.txt
+ * and the JSON-LD. Only ever read from server components.
+ *
+ * Resolution order:
+ *   1. NEXT_PUBLIC_SITE_URL          your custom domain, once you have one
+ *   2. VERCEL_PROJECT_PRODUCTION_URL the stable production host, set by Vercel
+ *   3. VERCEL_URL                    this specific deployment, set by Vercel
+ *   4. http://localhost:3000         local development
+ *
+ * WHY THIS IS NOT A ONE-LINER
+ * It used to be `process.env.NEXT_PUBLIC_SITE_URL?.replace(...) ?? fallback`, and
+ * that broke the first Vercel deploy. Next inlines every `NEXT_PUBLIC_*` reference
+ * at build time by textual replacement, so an unset variable becomes `''` rather
+ * than `undefined` — and `??` only catches null and undefined, so the empty string
+ * sailed through to `new URL('')`, which throws at module scope and fails the
+ * build before a single page renders.
+ *
+ * Hence: truthiness rather than nullishness, and every candidate parsed through
+ * `new URL()` so a malformed value falls through to the next one instead of
+ * taking the build down again.
  */
-export const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? 'http://localhost:3000';
+const LOCAL_ORIGIN = 'http://localhost:3000';
+
+function resolveSiteUrl(): string {
+  const candidates = [
+    process.env.NEXT_PUBLIC_SITE_URL,
+    // Vercel supplies both of these without a protocol.
+    process.env.VERCEL_PROJECT_PRODUCTION_URL,
+    process.env.VERCEL_URL,
+  ];
+
+  for (const candidate of candidates) {
+    const value = candidate?.trim();
+    if (!value) continue;
+
+    const withProtocol = /^https?:\/\//.test(value) ? value : `https://${value}`;
+    try {
+      return new URL(withProtocol).origin;
+    } catch {
+      // A malformed value is a misconfiguration, not a reason to fail the build.
+    }
+  }
+
+  return LOCAL_ORIGIN;
+}
+
+export const siteUrl = resolveSiteUrl();
 
 /** Primary navigation. Order mirrors the page's trust hierarchy. */
 export const navLinks = [
