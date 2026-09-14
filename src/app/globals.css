@@ -1,0 +1,600 @@
+@import 'tailwindcss';
+
+/* ============================================================================
+   DESIGN TOKENS — "The Rate Card"
+   ----------------------------------------------------------------------------
+   Publishing real rupee prices is the differentiating act in this market, so the
+   price list is the artifact the design is built around: set with typographic
+   authority, with everything near it kept quiet.
+
+   Every contrast ratio below was measured, not estimated. Two results shaped the
+   palette and must not be undone:
+
+     • --color-indigo on --color-ink measures 2.02:1. The accent is UNUSABLE as
+       text on the dark footer. --color-indigo-light exists solely for that
+       surface, and measures 7.86:1.
+
+     • --color-rule is 1.23:1 on paper, which is correct — it is a decorative
+       separator, and WCAG 1.4.11 does not apply to it. An input or option border
+       IS a component boundary and does need 3:1, so it uses --color-rule-strong
+       (3.36:1) instead. Do not collapse these two into one token.
+   ========================================================================= */
+
+@theme {
+  /* --- Surfaces ---------------------------------------------------------- */
+  --color-paper: #faf9f7; /* warm off-white page ground                       */
+  --color-card: #ffffff;
+  --color-ink: #14161b; /* near-black, cool cast — text and the footer ground */
+
+  /* --- Text -------------------------------------------------------------- */
+  --color-ink-muted: #4e5360; /* 7.31:1 on paper · 7.71:1 on card       AAA */
+  --color-paper-muted: #a8acb4; /* secondary text on ink · 7.95:1 on ink AAA */
+
+  /* --- Lines ------------------------------------------------------------- */
+  --color-rule: #e4e2dd; /* hairlines, keyed warm to the paper — decorative  */
+  --color-rule-strong: #8b8880; /* interactive borders · 3.36:1 on paper     */
+  --color-rule-ink: #2b2e36; /* hairlines on the ink surface                 */
+
+  /* --- Accent — exactly one hue, three values ---------------------------- */
+  --color-indigo: #2f30c4; /* 8.53:1 on paper · 8.97:1 on card         AAA */
+  --color-indigo-deep: #23249b; /* hover and pressed                          */
+  --color-indigo-light: #a3a4f0; /* FOR USE ON --color-ink ONLY · 7.86:1 AAA */
+  --color-indigo-tint: #eeeefb; /* wash — the finder result and Most Popular  */
+
+  /* --- Semantic --------------------------------------------------------- */
+  /* Form validation only. Never decorative, and never the sole signal — every
+     error also carries text and aria-invalid, because colour alone is not a
+     message to someone who cannot distinguish it. 7.12:1 on paper.          */
+  --color-danger: #a3221b;
+
+  /* --- Type -------------------------------------------------------------- */
+  --font-display: var(--font-bricolage), 'Helvetica Neue', Arial, sans-serif;
+  --font-sans: var(--font-schibsted), -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial,
+    sans-serif;
+
+  /* Display sizes are fluid; body sizes are fixed, because body text that grows
+     with the viewport is harder to read, not easier. 17px is the mobile floor. */
+  --text-display-xl: clamp(2.6rem, 6.4vw, 5rem);
+  --text-display-xl--line-height: 0.96;
+  --text-display-xl--letter-spacing: -0.032em;
+
+  --text-display-l: clamp(1.9rem, 3.4vw, 2.9rem);
+  --text-display-l--line-height: 1.04;
+  --text-display-l--letter-spacing: -0.024em;
+
+  --text-display-m: clamp(1.35rem, 2vw, 1.75rem);
+  --text-display-m--line-height: 1.16;
+  --text-display-m--letter-spacing: -0.016em;
+
+  --text-display-s: clamp(1.08rem, 1.4vw, 1.28rem);
+  --text-display-s--line-height: 1.28;
+  --text-display-s--letter-spacing: -0.01em;
+
+  --text-price: clamp(1.65rem, 2.4vw, 2.15rem);
+  --text-price--line-height: 1;
+  --text-price--letter-spacing: -0.022em;
+
+  --text-lead: clamp(1.05rem, 1.15vw, 1.24rem);
+  --text-lead--line-height: 1.56;
+  --text-lead--letter-spacing: -0.005em;
+
+  --text-base: 1.0625rem; /* 17px */
+  --text-base--line-height: 1.65;
+
+  --text-sm: 0.9375rem; /* 15px */
+  --text-sm--line-height: 1.55;
+
+  --text-xs: 0.8125rem; /* 13px */
+  --text-xs--line-height: 1.45;
+
+  /* --- Radii — differ by role, deliberately. One radius on everything is the
+         clearest tell of a card-kit layout. -------------------------------- */
+  --radius-btn: 0.5rem;
+  --radius-card: 0.875rem;
+  --radius-frame: 0.25rem;
+  --radius-pill: 999px;
+
+  /* --- Elevation — one shadow, tinted with ink rather than black, and only
+         ever used on hover. ------------------------------------------------ */
+  --shadow-lift: 0 1px 2px rgb(20 22 27 / 0.04), 0 12px 28px -10px rgb(20 22 27 / 0.14);
+  --shadow-dialog: 0 24px 70px -12px rgb(20 22 27 / 0.3);
+
+  /* --- Motion ------------------------------------------------------------ */
+  --ease-settle: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-damp: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Not a Tailwind namespace, so declared separately. */
+:root {
+  --header-h: 3.875rem;
+  --gutter: 1.25rem;
+}
+@media (min-width: 640px) {
+  :root {
+    --gutter: 1.75rem;
+  }
+}
+@media (min-width: 1024px) {
+  :root {
+    --header-h: 4.25rem;
+    --gutter: 2rem;
+  }
+}
+
+/* ============================================================================
+   BASE
+   ========================================================================= */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    /* Anchored sections must clear the sticky header. */
+    scroll-padding-top: calc(var(--header-h) + 1.5rem);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* NOTE: no tabular-figures utility here, deliberately.
+     Schibsted Grotesk gives the comma a full digit-width advance under
+     `font-variant-numeric: tabular-nums`, so "₹2,000" renders as "₹2 , 000".
+     Tabular figures only pay for themselves when numbers are stacked in a column
+     and must align on the decimal — nothing in this layout does, so prices use
+     the proportional figures the typeface was drawn with. */
+
+  /* One focus treatment for the whole site. */
+  :focus-visible {
+    outline: 2px solid var(--color-indigo);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+  /* On ink and on the accent itself, the indigo ring disappears — swap it. */
+  .on-ink :focus-visible,
+  .btn-accent:focus-visible {
+    outline-color: var(--color-indigo-light);
+  }
+  .btn-accent:focus-visible {
+    outline-offset: 3px;
+  }
+
+  ::selection {
+    background-color: var(--color-indigo);
+    color: #fff;
+  }
+
+  /* Images never overflow their column, whatever the source dimensions. */
+  img,
+  svg,
+  video {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* ============================================================================
+   COMPONENTS
+   ========================================================================= */
+@layer components {
+  .shell {
+    width: 100%;
+    max-width: 75rem;
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+
+  /* Section rhythm. Declared once so no section can invent its own spacing and
+     quietly break the vertical cadence of the page. */
+  .band {
+    padding-block: clamp(3.5rem, 7vw, 6.5rem);
+  }
+  .band-tight {
+    padding-block: clamp(2.5rem, 4.5vw, 4rem);
+  }
+
+
+
+  /* --- Hero backdrop -----------------------------------------------------
+     Five arcs and four marks, rotating at different speeds and directions.
+     Every animation here is a transform, which the compositor runs off the
+     main thread — there is no layout, no paint and no JavaScript involved.
+
+     The mask fades the whole thing out toward the edges and under the text,
+     so it never competes with the headline for contrast. Without it the arcs
+     cut across the copy and the hero stops being readable.
+     ---------------------------------------------------------------------- */
+  .hero-backdrop {
+    /*
+      Phone first. The hero stacks here, so the arcs are masked to the lower
+      half — around the portrait, below the copy. Unmasked they scale up with
+      the viewBox and cut straight through the headline, which is the one place
+      on the page that cannot afford competition.
+    */
+    --hero-mask: radial-gradient(
+      116% 46% at 52% 84%,
+      #000 0%,
+      rgb(0 0 0 / 0.55) 55%,
+      transparent 88%
+    );
+    -webkit-mask-image: var(--hero-mask);
+    mask-image: var(--hero-mask);
+    opacity: 0.75;
+  }
+
+  /* From `lg` the hero is two columns and the arcs can centre on the portrait,
+     where there is room for them to read as a field rather than as lines
+     crossing text. */
+  @media (min-width: 1024px) {
+    .hero-backdrop {
+      --hero-mask: radial-gradient(
+        78% 82% at 72% 40%,
+        #000 0%,
+        rgb(0 0 0 / 0.8) 42%,
+        rgb(0 0 0 / 0.3) 70%,
+        transparent 92%
+      );
+      opacity: 1;
+    }
+  }
+
+  /* Opposed directions and prime-ish periods, so the arcs never resync into a
+     visible pattern the eye can lock onto. */
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-backdrop .spin-a { animation: backdrop-spin 92s linear infinite; }
+    .hero-backdrop .spin-b { animation: backdrop-spin 127s linear infinite reverse; }
+    .hero-backdrop .spin-c { animation: backdrop-spin 163s linear infinite; }
+    .hero-backdrop .spin-d { animation: backdrop-spin 211s linear infinite reverse; }
+    .hero-backdrop .spin-e { animation: backdrop-spin 274s linear infinite; }
+  }
+
+  @keyframes backdrop-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* --- Hero load sequence ------------------------------------------------
+     The page's one non-user-triggered motion moment. Four elements settle in
+     sequence, staggered by a --i index set per element. Pure CSS, so it costs
+     no JavaScript and cannot hold up the largest contentful paint.
+
+     The whole rule is inside a no-preference query: for a reduced-motion
+     visitor the elements are simply there, never hidden and never animated.
+     ---------------------------------------------------------------------- */
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-in {
+      animation: hero-settle 620ms var(--ease-settle) both;
+      animation-delay: calc(var(--i, 0) * 90ms);
+    }
+  }
+
+  @keyframes hero-settle {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+
+  /* --- Project finder ----------------------------------------------------
+     Two short entrances: one per question, and a slightly longer one for the
+     result, because the result arriving is the moment the whole interaction
+     exists for. Both are keyed re-renders in React, so the animation replays
+     without any JS orchestration.
+     ---------------------------------------------------------------------- */
+  @media (prefers-reduced-motion: no-preference) {
+    .finder-step {
+      animation: finder-step-in 260ms var(--ease-settle) both;
+    }
+    .finder-result {
+      animation: finder-result-in 480ms var(--ease-settle) both;
+    }
+  }
+
+  @keyframes finder-step-in {
+    from {
+      opacity: 0;
+      transform: translateX(10px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes finder-result-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px) scale(0.99);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* --- Live indicator ----------------------------------------------------
+     The only looping animation on the site. It earns the exception because it
+     encodes a fact — these three demos are running and can be opened — rather
+     than decorating one. Held to a slow, low-amplitude pulse so it reads as a
+     status light, not as something demanding attention.
+     ---------------------------------------------------------------------- */
+  @media (prefers-reduced-motion: no-preference) {
+    .live-dot {
+      /* Three beats, then it settles — not infinite.
+         An endlessly looping animation keeps the compositor awake for the whole
+         session, which is a real (if small) battery cost on a phone for a 6px
+         dot, and it means the page never reaches a still frame. Three pulses
+         carry the same signal on arrival and then get out of the way. */
+      animation: live-pulse 2.2s var(--ease-damp) 3 both;
+    }
+  }
+
+  @keyframes live-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+
+  /* --- Sticky header -----------------------------------------------------
+     Compacts as the page scrolls, using a CSS scroll-driven animation rather
+     than a scroll listener: no JavaScript, nothing running per frame, and in a
+     browser without support the header simply stays at its full height.
+     `both` holds the end state so it does not snap back at the range edge.
+     ---------------------------------------------------------------------- */
+  .site-header {
+    height: var(--header-h);
+  }
+  .site-header__mark {
+    color: var(--color-ink);
+  }
+
+  @supports (animation-timeline: scroll()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .site-header {
+        animation: header-compact linear both;
+        animation-timeline: scroll();
+        animation-range: 0 140px;
+      }
+    }
+  }
+
+  @keyframes header-compact {
+    to {
+      height: 3.25rem;
+      border-bottom-color: var(--color-rule);
+      background-color: color-mix(in srgb, var(--color-paper) 92%, transparent);
+    }
+  }
+
+  /* --- Buttons ----------------------------------------------------------- */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 2.875rem; /* 46px — comfortably over the 44px touch minimum */
+    padding-inline: 1.25rem;
+    padding-block: 0.625rem;
+    border-radius: var(--radius-btn);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    line-height: 1.3;
+    text-align: center;
+    text-wrap: balance;
+    transition:
+      background-color 160ms var(--ease-damp),
+      border-color 160ms var(--ease-damp),
+      color 160ms var(--ease-damp),
+      transform 160ms var(--ease-damp);
+  }
+  .btn:active {
+    transform: translateY(1px);
+  }
+
+  /* --- Stretched trigger --------------------------------------------------
+     Makes a button's hit area its nearest positioned ancestor — used so a whole
+     service card opens its dialog, not just the small button at its foot.
+
+     The `:active` override is not cosmetic, it is required. `.btn:active` sets
+     `transform: translateY(1px)`, and ANY transform makes an element the
+     containing block for its absolutely-positioned descendants. On mousedown the
+     ::after would therefore stop resolving against the card and collapse to the
+     button's own box — so a press starting at the top of the card would land
+     nowhere on mouseup and the click would never fire. It took a hit-test that
+     said "yes, the button is here" next to a click that did nothing to find it.
+     -------------------------------------------------------------------- */
+  .btn-stretch::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+  .btn-stretch:active {
+    transform: none;
+  }
+
+  .btn-accent {
+    background-color: var(--color-indigo);
+    color: #fff;
+  }
+  .btn-accent:hover {
+    background-color: var(--color-indigo-deep);
+  }
+
+  .btn-outline {
+    border: 1px solid var(--color-rule-strong);
+    color: var(--color-ink);
+    background-color: transparent;
+  }
+  .btn-outline:hover {
+    border-color: var(--color-ink);
+    background-color: var(--color-card);
+  }
+
+  /* Only for use inside .on-ink. */
+  .btn-on-ink {
+    border: 1px solid var(--color-rule-ink);
+    color: var(--color-paper);
+  }
+  .btn-on-ink:hover {
+    border-color: var(--color-indigo-light);
+    color: var(--color-indigo-light);
+  }
+
+  /* --- Link with an underline that responds rather than decorates -------- */
+  .link {
+    color: var(--color-indigo);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+    text-decoration-color: color-mix(in srgb, var(--color-indigo) 35%, transparent);
+    transition: text-decoration-color 160ms var(--ease-damp);
+  }
+  .link:hover {
+    text-decoration-color: currentColor;
+  }
+  .on-ink .link {
+    color: var(--color-indigo-light);
+  }
+
+  /* --- Surfaces ---------------------------------------------------------- */
+  .panel {
+    background-color: var(--color-card);
+    border: 1px solid var(--color-rule);
+    border-radius: var(--radius-card);
+  }
+
+  .on-ink {
+    background-color: var(--color-ink);
+    color: var(--color-paper);
+  }
+  .on-ink h1,
+  .on-ink h2,
+  .on-ink h3,
+  .on-ink h4 {
+    color: var(--color-paper);
+  }
+
+  /* --- Motion -----------------------------------------------------------
+     Section reveals are short and only applied to major headings, never to
+     every card. The whole rule lives inside a no-preference query, so the
+     hidden state never exists for someone who asked for reduced motion — an
+     opacity:0 that never animates back is the usual way this breaks.
+     -------------------------------------------------------------------- */
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal {
+      opacity: 0;
+      transform: translateY(8px);
+      transition:
+        opacity 340ms var(--ease-settle),
+        transform 340ms var(--ease-settle);
+    }
+    .reveal[data-shown='true'] {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* --- Native dialog ------------------------------------------------------ */
+  dialog::backdrop {
+    background-color: rgb(20 22 27 / 0.45);
+    backdrop-filter: blur(2px);
+  }
+  dialog[open] {
+    animation: dialog-in 220ms var(--ease-settle);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    dialog[open] {
+      animation: none;
+    }
+  }
+  @keyframes dialog-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* --- Native disclosure -------------------------------------------------- */
+  details > summary {
+    cursor: pointer;
+    list-style: none;
+  }
+  details > summary::-webkit-details-marker {
+    display: none;
+  }
+}
+
+/* ============================================================================
+   UTILITIES
+   ========================================================================= */
+@utility sr-only-focusable {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ============================================================================
+   UNLAYERED
+   ----------------------------------------------------------------------------
+   Deliberately outside every @layer. Unlayered CSS outranks all layered CSS in
+   the cascade regardless of specificity, which is exactly what a focus ring
+   needs: it must win, and it must not have to be re-argued every time a utility
+   class is added to the element it sits on.
+   ========================================================================= */
+
+/*
+ * The ring belongs on the card, because the card is what the stretched trigger
+ * actually covers — a 2px ring around a button hidden behind a 558px hit area
+ * tells a keyboard user nothing about what they are about to open.
+ *
+ * Scoped to `.btn-stretch` rather than any focused button, because the dialog is
+ * a DOM descendant of the card: an unscoped :has(button:focus-visible) would
+ * light up the card behind an open dialog every time focus moved inside it.
+ */
+.card-focusable:has(.btn-stretch:focus-visible) {
+  outline: 2px solid var(--color-indigo);
+  outline-offset: 3px;
+}
